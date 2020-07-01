@@ -5,16 +5,18 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
-
+#include <string.h>
+#include<cmath>
 using namespace std;
 
+#define LENGTH_KEY 1671
 void GenerateKey(){
     
     int i=1;
     srand((int)time(0));
     int a;
     int b;
-    for(i=0;i<1671;i++)
+    for(i=0;i<LENGTH_KEY;i++)
     {
 	
     b=rand() % 70;
@@ -36,15 +38,87 @@ void GenerateKey(){
 	}
     
 }
-/*
+
 void encrypt(const char * message, string key){
     //read key
+    srand((int)time(0));
     ifstream keyfile;
     keyfile.open(key);
-    string p0, q0, n0, phi0, e0, d0;
-    keyfile >> p0 >> q0 >> n0 >> phi0 >> e0 >> d0;
-    int  
+    string key;
+    keyfile >> key;
+    int length_m=strlen(message);
+   
+   
+    int length_um=max(3*length_m,501);
+    
+    int usedmap[]=new int[length_um];
+    int index_m=0;
+    int index_k=0;
+    
+    
+    int index=length_um/2;
+    while(index_m<length_m && index_k<key.length())
+    {
+    	//17 is coprime to 501
+    	index=(index+17*(int)key.charAt(index_k))%(length_um);
+    	index_k++;
+    	
+    	while(usedmap[index]!=0)
+    	{
+    		if(index_k>=key.length())
+    		{
+    			//不能用这个key了,但我希望的是，不要有人搞了个1600+的key都摆不定的东西出来 
+				for(int i=length_um-1;i>=0;i--)
+				{
+					if(usedmap[i]==0)
+					{
+						index=i;
+						break;
+					}
+				 } 
+			}
+			else
+			{
+				//首次卡住后用19跳步 
+				index=(index+19*(int)key.charAt(index_k))%length_um;
+            	index_k++;
+			}
+		}
+		usedmap[index]=message[index_m];
+		index_m++;
+	}
+    
+    index=length_um/2;
+    while(index_m<length_m)
+    {
+    	while(usedmap[index]!=0)
+    	{
+    		index=(index-1+length_um)%(length_um);
+		}
+		usedmap[index]=message[index_m;]
+		index_m++;
+	}
+	
+	
+    index_k=index_k/2;
+    index=2*length_um/3;
+    for(int i=index;i<length_um;i++)
+    {
+    	//用非法解密填补不足（1-37） 
+		 if(usedmap[i]!=0)
+		 {
+		 	continue;
+		 }
+		 else
+		 {
+		 	usedmap[i]=(rand()%37)+1;
+		 }
+	}
+    
+    
+    
     //encryption
+    int ii=0;
     mpz_t m;
     mpz_t c;
     mpz_t e;
@@ -53,46 +127,178 @@ void encrypt(const char * message, string key){
     mpz_init(c);
     mpz_init(e);
     mpz_init(n);
-    mpz_set_str(m, message, 10);
-    mpz_set_str(e, e1, 10);
-    mpz_set_str(n, n1, 10);
-    mpz_powm(c, m ,e, n);
-    gmp_printf("%Zd \n", c);
+    
+    mpz_set_ui(e, 1);
+    mpz_set_ui(n, 0);
+    
+    for(ii=0;ii<length_um;ii++)
+    {
+    	mpz_set_ui(m,usedmap[ii]);
+    	mpz_mul(c,m,e);
+    	mpz_add(n,n,c);
+    	mpz_mul_ui(e,e,197);
+	}
+    
+    gmp_printf("%Zd \n", n);
     mpz_clear(m);
     mpz_clear(c);
     mpz_clear(e);
     mpz_clear(n);
+    
+    delete [] usedmap;
 }
 
 void decrypt(const char * message, string key){
     //read key
     ifstream keyfile;
     keyfile.open(key);
-    string p0, q0, n0, phi0, e0, d0;
-    keyfile >> p0 >> q0 >> n0 >> phi0 >> e0 >> d0;
-    const char* d1 = d0.c_str();
-    const char* n1 = n0.c_str();
+    string key;
+    keyfile >> key;
+    
+    
     //encryption
     mpz_t m;
-    mpz_t c;
+    mpz_t e;
     mpz_t d;
     mpz_t n;
     mpz_init(m);
-    mpz_init(c);
+    mpz_init(e);
     mpz_init(d);
     mpz_init(n);
-    mpz_set_str(c, message, 10);
-    mpz_set_str(d, d1, 10);
-    mpz_set_str(n, n1, 10);
-    mpz_powm_sec(m, c, d, n);
-    if (mpz_cmp_ui(m, 0) == 0) cout << "really zero?" << endl;
-    gmp_printf("%Zd \n", m);
+    
+    
+    mpz_set_str(n, message, 10);
+    
+    
+    int length_um=0;
+    
+    mpz_set_ui(e, 1);
+    
+    while(mpz_cmp(n, e)>0)
+    {
+    	length_um++;
+    	mpz_mul_ui(e,e,197);//Now e=197^length_um 
+	}
+	
+	// Here we get the length of usedmap
+    
+    int length_m=length_um/3;//如果是501的情况，那么就可以提前截断
+	char decrypt[]=new char[length_m+1]; 
+    int usedmap[]=new usedmap[length_um];
+    
+    int index=length_um/2;
+    
+    int index_k=0;
+    
+    int index_m=0;
+    
+    int ii=0;
+    
+    while( index_k<key.length())
+    {
+    	
+    	index=(index+17*(int)key.charAt(index_k))%(length_um);
+    	index_k++;
+    	
+    	while(usedmap[index]!=0)
+    	{
+    		if(index_k>=key.length())
+    		{
+    			
+				for(int i=length_um-1;i>=0;i--)
+				{
+					if(usedmap[i]==0)
+					{
+						index=i;
+						break;
+					}
+				 } 
+			}
+			else
+			{
+				//首次卡住后用19跳步 
+				index=(index+19*(int)key.charAt(index_k))%length_um;
+            	index_k++;
+			}
+		}
+		
+		
+		
+    mpz_ui_pow_ui(e, 197,index+1);
+		
+    mpz_fdiv_qr(d, m,n,e);//考虑m
+	
+	 mpz_tdiv_q_ui(e, e, 197); 
+	 
+	 mpz_cdiv_q(d, m, e);
+	 
+	 if(mpz_cmp_si(d,38)<0)
+	 {
+	 	break;
+	 }
+	 else
+	 {
+	 	decrypt[ii++]=mpz_get_ui(d);
+	 	usedmap[index]=1;//不需要确定数据，标志即可 
+	 }
+		
+		
+	}
+    
+    index=length_um/2;
+    
+    while(decrypt[ii-1]>38) 
+    {
+    	//这里代表key没了 
+    	
+    	while(usedmap[index]!=0)
+    	{
+    		index=(index-1+length_um)%(length_um);
+		}
+		 mpz_ui_pow_ui(e, 197,index+1);
+		
+    mpz_fdiv_qr(d, m,n,e);//考虑m
+	
+	 mpz_tdiv_q_ui(e, e, 197); 
+	 
+	 mpz_cdiv_q(d, m, e);
+	 
+	 if(mpz_cmp_si(d,38)<0)
+	 {
+	 	break;
+	 }
+	 else
+	 {
+	 	decrypt[ii++]=mpz_get_ui(d);
+	 	usedmap[index]=1;//不需要确定数据，标志即可 
+	 }
+	}
+    
+    
+    
+    
+    
+    
+	
+    
+    usedmap[ii]='\0';
+    
+    
+    
+    cout<<usedmap<<endl;
+    
+    
+    
+    delete []decrypt; 
+    delete []usedmap;
+    
+    
     mpz_clear(m);
-    mpz_clear(c);
+    mpz_clear(e);
     mpz_clear(d);
     mpz_clear(n);
 }
-*/
+
 int main(int argu, char * argv[]) {
     /*if (argu == 2) GenerateKey();
     else if (argu == 3 && argv[1][2] == 'e') encrypt(argv[2], "keyfile.txt");
@@ -121,7 +327,8 @@ int main(int argu, char * argv[]) {
     else if (argu == 5 && argv[1][2] == 'e') encrypt(argv[2], argv[4]);
     else if (argu == 5 && argv[1][2] == 'd') decrypt(argv[2], argv[4]);
     return 0;*/
-    GenerateKey();
+    const char * message="";
+    cout<<strlen(message);
 }
 
 
