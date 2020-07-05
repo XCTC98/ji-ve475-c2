@@ -69,7 +69,7 @@ void encrypt(const char * message, string Key){
     	{
     		if(index_k>=key.length())
     		{
-    			//不能用这个key了,但我希望的是，不要有人搞了个1600+的key都摆不定的东西出来
+
 				for(int i=length_um-1;i>=0;i--)
 				{
 					if(usedmap[i]==0)
@@ -81,14 +81,16 @@ void encrypt(const char * message, string Key){
 			}
 			else
 			{
-				//首次卡住后用19跳步
+
 				index=(index+19*(int)key.at(index_k))%length_um;
             	index_k++;
 			}
+
 		}
 
-        //cout<<index<<endl;
 		usedmap[index]=message[index_m];
+
+
 		index_m++;
 	}
 
@@ -100,6 +102,8 @@ void encrypt(const char * message, string Key){
     		index=(index-1+length_um)%(length_um);
 		}
 		usedmap[index]=message[index_m];
+
+
 		index_m++;
 	}
 
@@ -108,7 +112,7 @@ void encrypt(const char * message, string Key){
     index=2*length_um/3;
     for(int i=0;i<length_um;i++)
     {
-    	//用非法解密填补不足（1-37）
+
 		 if(usedmap[i]!=0)
 		 {
 		 	continue;
@@ -181,14 +185,16 @@ void decrypt(const char * message, string Key){
     while(mpz_cmp(n, e)>0)
     {
     	length_um++;
-    	mpz_mul_ui(e,e,197);//Now e=197^length_um
+    	mpz_mul_ui(e,e,197);
 	}
 
-	// Here we get the length of usedmap
 
-    int length_m=length_um/3;//如果是501的情况，那么就可以提前截断
+
+    int length_m=length_um/3;
 	char* decrypt=new char[length_m+1];
     int* usedmap=new int[length_um];
+    for(int j=0;j<length_um;++j)
+    usedmap[j]=0;
 
     int index=length_um/2;
 
@@ -203,6 +209,8 @@ void decrypt(const char * message, string Key){
 
     	index=(index+17*(int)key.at(index_k))%(length_um);
     	index_k++;
+
+
 
     	while(usedmap[index]!=0)
     	{
@@ -220,23 +228,26 @@ void decrypt(const char * message, string Key){
 			}
 			else
 			{
-				//首次卡住后用19跳步
+
 				index=(index+19*(int)key.at(index_k))%length_um;
             	index_k++;
 			}
 		}
 
 
-		//cout<<index<<endl;
+
+
+
+
+
 
     mpz_ui_pow_ui(e, 197,index+1);
 
-    mpz_fdiv_qr(d, m,n,e);//考虑m
+    mpz_fdiv_qr(d, m,n,e);
 
 	 mpz_tdiv_q_ui(e, e, 197);
 
 	 mpz_fdiv_q(d, m, e);
-
 
 
 	 if(mpz_cmp_si(d,38)<0)
@@ -246,7 +257,10 @@ void decrypt(const char * message, string Key){
 	 else
 	 {
 	 	decrypt[ii++]=mpz_get_ui(d);
-	 	usedmap[index]=1;//不需要确定数据，标志即可
+
+
+
+	 	usedmap[index]=1;
 	 }
 
 
@@ -256,7 +270,7 @@ void decrypt(const char * message, string Key){
 
     while(decrypt[ii-1]>38)
     {
-    	//这里代表key没了
+
 
     	while(usedmap[index]!=0)
     	{
@@ -264,7 +278,7 @@ void decrypt(const char * message, string Key){
 		}
 		 mpz_ui_pow_ui(e, 197,index+1);
 
-    mpz_fdiv_qr(d, m,n,e);//考虑m
+    mpz_fdiv_qr(d, m,n,e);
 
 	 mpz_tdiv_q_ui(e, e, 197);
 
@@ -279,7 +293,10 @@ void decrypt(const char * message, string Key){
 	 else
 	 {
 	 	decrypt[ii++]=mpz_get_ui(d);
-	 	usedmap[index]=1;//不需要确定数据，标志即可
+
+
+
+	 	usedmap[index]=1;
 	 }
 	}
 
@@ -312,7 +329,7 @@ int main(int argu, char * argv[]) {
     if (argu == 2) GenerateKey();
     else if (argu == 3 && argv[1][2] == 'e') encrypt(argv[2], "keyfile.txt");
     else if (argu == 3 && argv[1][2] == 'd') {
-        //test if is using the default key to decript the ciphertext
+
         ifstream cipher;
         cipher.open("ciphertext.txt");
         string ciphertext0;
