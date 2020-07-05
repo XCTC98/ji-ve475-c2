@@ -52,6 +52,10 @@ void encrypt(const char * message, string Key){
     int length_um=max(3*length_m,501);
 
     int* usedmap=new int[length_um];
+    for(int j=0;j<length_um;j++)
+    {
+    usedmap[j]=0;
+    }
     int index_m=0;
     int index_k=0;
 
@@ -90,7 +94,6 @@ void encrypt(const char * message, string Key){
 
 		usedmap[index]=message[index_m];
 
-
 		index_m++;
 	}
 
@@ -108,6 +111,8 @@ void encrypt(const char * message, string Key){
 	}
 
 
+
+
     index_k=index_k/2;
     index=2*length_um/3;
     for(int i=0;i<length_um;i++)
@@ -119,7 +124,7 @@ void encrypt(const char * message, string Key){
 		 }
 		 else
 		 {
-		 	usedmap[i]=(rand()%37)+1;
+		 	usedmap[i]=(rand()%31)+1;
 		 }
 	}
 
@@ -196,6 +201,10 @@ void decrypt(const char * message, string Key){
     for(int j=0;j<length_um;++j)
     usedmap[j]=0;
 
+    for(int j=0;j<=length_m;++j)
+    decrypt[j]=0;
+
+
     int index=length_um/2;
 
     int index_k=0;
@@ -239,8 +248,6 @@ void decrypt(const char * message, string Key){
 
 
 
-
-
     mpz_ui_pow_ui(e, 197,index+1);
 
     mpz_fdiv_qr(d, m,n,e);
@@ -250,15 +257,14 @@ void decrypt(const char * message, string Key){
 	 mpz_fdiv_q(d, m, e);
 
 
-	 if(mpz_cmp_si(d,38)<0)
+
+	 if(mpz_cmp_si(d,32)<0)
 	 {
 	 	break;
 	 }
 	 else
 	 {
 	 	decrypt[ii++]=mpz_get_ui(d);
-
-
 
 	 	usedmap[index]=1;
 	 }
@@ -268,7 +274,7 @@ void decrypt(const char * message, string Key){
 
     index=length_um/2;
 
-    while(decrypt[ii-1]>38)
+    while(decrypt[ii-1]>32)
     {
 
 
@@ -276,6 +282,8 @@ void decrypt(const char * message, string Key){
     	{
     		index=(index-1+length_um)%(length_um);
 		}
+
+
 		 mpz_ui_pow_ui(e, 197,index+1);
 
     mpz_fdiv_qr(d, m,n,e);
@@ -286,7 +294,7 @@ void decrypt(const char * message, string Key){
 
 
 
-	 if(mpz_cmp_si(d,38)<0)
+	 if(mpz_cmp_si(d,32)<0)
 	 {
 	 	break;
 	 }
@@ -326,32 +334,37 @@ void decrypt(const char * message, string Key){
 }
 
 int main(int argu, char * argv[]) {
-    if (argu == 2) GenerateKey();
+        if (argu == 2) GenerateKey();
     else if (argu == 3 && argv[1][2] == 'e') encrypt(argv[2], "keyfile.txt");
     else if (argu == 3 && argv[1][2] == 'd') {
-
+        //test if is using the default key to decript the ciphertext
         ifstream cipher;
         cipher.open("ciphertext.txt");
         string ciphertext0;
+        cipher >> ciphertext0;
         const char* ciphertext1 = ciphertext0.c_str();
         mpz_t ciphertext;
         mpz_init(ciphertext);
         mpz_set_str(ciphertext, ciphertext1, 10);
-        mpz_t text;
-        mpz_init(text);
-        mpz_set_str(text, argv[2], 10);
-        if (mpz_cmp(text, ciphertext) == 0) {
-            mpz_clear(text);
+        mpz_t text0;
+        mpz_init(text0);
+        mpz_set_str(text0, argv[2], 10);
+        if (mpz_cmp(text0, ciphertext) == 0) {
+            mpz_clear(text0);
             mpz_clear(ciphertext);
             cout << "cheater: it is forbidden to decrypt the challenge ciphertext" << endl;
             return 0;
         }
         decrypt(argv[2], "keyfile.txt");
-        mpz_clear(text);
+        mpz_clear(text0);
         mpz_clear(ciphertext);
     }
     else if (argu == 5 && argv[1][2] == 'e') encrypt(argv[2], argv[4]);
     else if (argu == 5 && argv[1][2] == 'd') decrypt(argv[2], argv[4]);
+    else if (argu == 5 && argv[1][2] == 'k') {
+        if (argv[3][2] == 'e') encrypt(argv[4], argv[2]);
+        else decrypt(argv[4], argv[2]);
+    }
     return 0;
 }
 
