@@ -3,6 +3,9 @@
 
 - [Environment and software support of the project](#Environment and software support of the project)
 - [Fuction of the project](#Fuction of the project)
+- [Key generation](#Key generation)
+- [Encryption](#Encryption)
+- [Decryption ](#Decryption )
 - [Usage](#usage)
 
 ## Environment and software support of the project
@@ -40,3 +43,16 @@ too short and too easy to figure out the rule.
 the encryption. Follow the same strategy in encryption to orderly get the position of related cipher 
 plain pair bits. For each encrypted bit, calculate the according plain bit by
 calculating the factor of related power of 197
+
+## Environment and software support of the project
+Here I show my Makefile, but remember, when you compile it on your own PC, remember 
+to change the directory to your own address for GMP library.
+
+```sh
+main3: main3.o
+	g++ -o c2 main3.o   /usr/lib/x86_64-linux-gnu/libgmp.a /usr/lib/x86_64-linux-gnu/libgmpxx.a
+main3.o : main3.cpp
+	g++ -Wall -fexceptions -g  -c main3.cpp -o main3.o
+clean:
+	rm main3.o -rf
+```
